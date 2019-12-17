@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="漏洞学习," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言学习域传送漏洞之前我们先要了解DNS的基本原理以及nslookup,dig等工具使用。 1.DNS原理1.1什么是DNSDNS(Domain Name System,域名管理系统)是www的重要基础。它建立在一个分布式数据库基础上。在这个基础上保存了IP与域名的对应关系。">
+<meta name="keywords" content="漏洞学习">
+<meta property="og:type" content="article">
+<meta property="og:title" content="域传送漏洞学习与使用">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;11&#x2F;dns-zone-transfer&#x2F;index.html">
+<meta property="og:site_name" content="Vicki&#39;s Blog">
+<meta property="og:description" content="前言学习域传送漏洞之前我们先要了解DNS的基本原理以及nslookup,dig等工具使用。 1.DNS原理1.1什么是DNSDNS(Domain Name System,域名管理系统)是www的重要基础。它建立在一个分布式数据库基础上。在这个基础上保存了IP与域名的对应关系。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;11&#x2F;dns-zone-transfer&#x2F;zoomeye.jpg">
+<meta property="og:image" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;11&#x2F;dns-zone-transfer&#x2F;fofa.jpg">
+<meta property="og:image" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;11&#x2F;dns-zone-transfer&#x2F;shodan.jpg">
+<meta property="og:image" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;11&#x2F;dns-zone-transfer&#x2F;dig1.jpg">
+<meta property="og:image" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;11&#x2F;dns-zone-transfer&#x2F;dig2.jpg">
+<meta property="og:image" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;11&#x2F;dns-zone-transfer&#x2F;nmap.jpg">
+<meta property="og:updated_time" content="2019-12-11T09:23:35.619Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;11&#x2F;dns-zone-transfer&#x2F;zoomeye.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/12/11/dns-zone-transfer/"/>
+
+
+
+
+
+  <title>域传送漏洞学习与使用 | Vicki's Blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Vicki's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">just do it!</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/11/dns-zone-transfer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Vicki">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Vicki's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">域传送漏洞学习与使用</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-12-11T16:00:08+08:00">
+                2019-12-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index">
+                    <span itemprop="name">渗透测试</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>学习域传送漏洞之前我们先要了解DNS的基本原理以及nslookup,dig等工具使用。</p>
+<h3 id="1-DNS原理"><a href="#1-DNS原理" class="headerlink" title="1.DNS原理"></a>1.DNS原理</h3><h4 id="1-1什么是DNS"><a href="#1-1什么是DNS" class="headerlink" title="1.1什么是DNS"></a>1.1什么是DNS</h4><p>DNS(Domain Name System,域名管理系统)是www的重要基础。它建立在一个分布式数据库基础上。在这个基础上保存了IP与域名的对应<br>关系。<a id="more"></a><br>正是因为DNS的存在,所以访问如百度,谷歌等网站时我们不需要记住他们的ip只需要记住他们的域名:<a href="http://www.baidu.com,www.google.com" target="_blank" rel="noopener">www.baidu.com,www.google.com</a><br>即可,相比于180.42.3.1这些大量无规则的ip来比,像<a href="http://www.baidu.com这类名字更容易被人所接受。" target="_blank" rel="noopener">www.baidu.com这类名字更容易被人所接受。</a></p>
+<p>DNS的常用tcp/udp端口为53<br>常用的DNS记录为:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">A记录			域名对应的ip</span><br><span class="line">AAAA记录		域名对应的ipv6</span><br><span class="line">NS记录			域名服务器记录,记录该域名由哪个域名服务器解析</span><br><span class="line">MX记录			邮件服务器记录,记录邮件服务器的对应ip地址</span><br><span class="line">CNAME记录		域名别名记录,记录一个主机的别名</span><br><span class="line">PTR记录			反向解析记录,即一条ip对应的域名记录		</span><br><span class="line">TXT记录			记录域名的相关文本记录</span><br></pre></td></tr></table></figure>
+
+<p>DNS服务器分为:主服务器,备份服务器,缓存服务器</p>
+<p>域传送是指从主服务器上备份DNS记录到备份服务器上,并用获取到的记录更新本身数据库<br>在主备服务器上同步数据需要用到DNS域传送</p>
+<h3 id="2-域传送漏洞的发现与利用"><a href="#2-域传送漏洞的发现与利用" class="headerlink" title="2.域传送漏洞的发现与利用"></a>2.域传送漏洞的发现与利用</h3><h4 id="2-1收集域服务器"><a href="#2-1收集域服务器" class="headerlink" title="2.1收集域服务器"></a>2.1收集域服务器</h4><h4 id="2-1-1使用zoomeye-fofa-shodan收集"><a href="#2-1-1使用zoomeye-fofa-shodan收集" class="headerlink" title="2.1.1使用zoomeye,fofa,shodan收集"></a>2.1.1使用zoomeye,fofa,shodan收集</h4><p>上文提及到域服务器使用的端口为53,可以用端口来搜索域服务器的存在<br>zoomeye:<br><img src="/2019/12/11/dns-zone-transfer/zoomeye.jpg" alt="this is a image!"><br>fofa:<br><img src="/2019/12/11/dns-zone-transfer/fofa.jpg" alt="this is a image!"><br>shodan:<br><img src="/2019/12/11/dns-zone-transfer/shodan.jpg" alt="this is a image!"><br>####2.2使用dig利用域传送漏洞<br>我这里使用的为vulhub搭建的域传送漏洞靶机,IP为172.19.5.201,域名为:<a href="http://www.vulhub.org" target="_blank" rel="noopener">www.vulhub.org</a><br>先使用dig来查看域名服务器</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dig @172.19.5.201 www.vulhub.org 		用172.19.5.201查询www.vulhub.org的ip地址</span><br></pre></td></tr></table></figure>
+<p><img src="/2019/12/11/dns-zone-transfer/dig1.jpg" alt="this is a image!"><br>可以看到<a href="http://www.vulhub.org的域服务器为" target="_blank" rel="noopener">www.vulhub.org的域服务器为</a><br>1.ns1.vulhub.org    10.0.0.1<br>2.ns2.vulhub.org    10.0.0.2<br>我们利用dig 的-t axfr命令来进行域传送</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dig @172.19.5.201 -t axfr www.vulhub.org</span><br></pre></td></tr></table></figure>
+<p><img src="/2019/12/11/dns-zone-transfer/dig2.jpg" alt="this is a image!"><br>可以看见获取了许多子域名,造成内网拓扑的信息泄露。</p>
+<h4 id="2-3-利用nmap来进行域传送"><a href="#2-3-利用nmap来进行域传送" class="headerlink" title="2.3.利用nmap来进行域传送"></a>2.3.利用nmap来进行域传送</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">nmap --script=dns-zone-transfer.nse --script.args=<span class="string">"dns-zone-transfer.domain=(your_domain)"</span> -Pn -p 53 your_ip</span><br><span class="line">dns-zone-transfer.domain 指定域名</span><br><span class="line">-Pn 通过ping来判断域名是否存活</span><br><span class="line">-p 53 指定53端口</span><br></pre></td></tr></table></figure>
+<p><img src="/2019/12/11/dns-zone-transfer/nmap.jpg" alt="this is a image!"></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/%E6%BC%8F%E6%B4%9E%E5%AD%A6%E4%B9%A0/" rel="tag"># 漏洞学习</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/12/06/pentestDC-2/" rel="next" title="DC-1与DC-2靶机渗透实战">
+                <i class="fa fa-chevron-left"></i> DC-1与DC-2靶机渗透实战
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Vicki</p>
+              <p class="site-description motion-element" itemprop="description">hhh</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">tags</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-DNS原理"><span class="nav-number">2.</span> <span class="nav-text">1.DNS原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1什么是DNS"><span class="nav-number">2.1.</span> <span class="nav-text">1.1什么是DNS</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-域传送漏洞的发现与利用"><span class="nav-number">3.</span> <span class="nav-text">2.域传送漏洞的发现与利用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1收集域服务器"><span class="nav-number">3.1.</span> <span class="nav-text">2.1收集域服务器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-1使用zoomeye-fofa-shodan收集"><span class="nav-number">3.2.</span> <span class="nav-text">2.1.1使用zoomeye,fofa,shodan收集</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-利用nmap来进行域传送"><span class="nav-number">3.3.</span> <span class="nav-text">2.3.利用nmap来进行域传送</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicki</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
